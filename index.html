@@ -1,116 +1,1174 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Coming Soon</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <title>ID-LoRA: Identity-Driven Audio-Video Personalization</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800;900&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['DM Sans', 'system-ui', 'sans-serif'],
+            display: ['DM Serif Display', 'Georgia', 'serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fdf8f0',
+              100: '#faefd9',
+              200: '#f5ddb3',
+              300: '#efc785',
+              400: '#d4a24a',
+              500: '#B8860B',
+              600: '#9a7009',
+              700: '#7d5b07',
+              800: '#614706',
+              900: '#4a3604',
+              950: '#2d2103',
+            },
+          },
+        }
+      }
+    }
+  </script>
   <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-    :root {
-      --bg: #f6f5f1;
-      --text: #2c2c2c;
-      --muted: #9a9a96;
-      --border: #ddddd8;
+    .av-card {
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
+    .av-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.10);
     }
-
-    .content {
-      text-align: center;
-      max-width: 440px;
-      animation: fadeIn 1.2s ease both;
+    .ours-highlight {
+      border: 2px solid #FDE0B4;
+      box-shadow: 0 0 0 1px #FDE0B4;
     }
-
-    .logo {
-      width: 36px;
-      height: 36px;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      margin: 0 auto 3rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--muted);
-      font-weight: 500;
-      font-size: 0.85rem;
+    .comp-col { width: 280px; flex-shrink: 0; }
+    @media (max-width: 767px) {
+      .comp-col { width: 100% !important; }
     }
-
-    h1 {
-      font-weight: 400;
-      font-size: 1.6rem;
-      letter-spacing: -0.01em;
-      margin-bottom: 1rem;
-      line-height: 1.4;
+    .pill { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+    .pill-env { background: #e0f5f7; color: #168092; }
+    .pill-style { background: #fce8ec; color: #782B37; }
+    .pill-speech { background: #f0e4fa; color: #7634C2; }
+    .mute-btn {
+      position: absolute; bottom: 8px; right: 8px; z-index: 10;
+      background: rgba(0,0,0,0.55); border: none; border-radius: 50%;
+      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: white; opacity: 0.7; transition: opacity 0.2s;
     }
-
-    p {
-      font-size: 0.95rem;
-      font-weight: 300;
-      color: var(--muted);
-      line-height: 1.7;
-      margin-bottom: 2.5rem;
+    .video-wrap:hover .mute-btn, .video-wrap:hover .play-btn { opacity: 1; }
+    .play-btn {
+      position: absolute; bottom: 8px; left: 8px; z-index: 10;
+      background: rgba(0,0,0,0.55); border: none; border-radius: 50%;
+      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: white; opacity: 0.7; transition: opacity 0.2s;
     }
-
-    .divider {
-      width: 32px;
-      height: 1px;
-      background: var(--border);
-      margin: 0 auto 2.5rem;
+    .fullscreen-btn {
+      position: absolute; bottom: 8px; left: 8px; z-index: 10;
+      background: rgba(0,0,0,0.55); border: none; border-radius: 50%;
+      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: white; opacity: 0; transition: opacity 0.2s;
     }
-
-    a.link {
-      font-size: 0.85rem;
-      font-weight: 400;
-      color: var(--muted);
-      text-decoration: none;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 2px;
-      transition: color 0.3s, border-color 0.3s;
+    .video-wrap:hover .fullscreen-btn { opacity: 0.7; }
+    .fullscreen-btn:hover { opacity: 1 !important; }
+    .gallery-play-overlay {
+      position: absolute; inset: 0; z-index: 15;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; background: rgba(0,0,0,0.25); transition: opacity 0.2s;
     }
-
-    a.link:hover {
-      color: var(--text);
-      border-color: var(--text);
+    .gallery-play-overlay svg {
+      width: 64px; height: 64px; color: white;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
     }
-
-    .links {
-      display: flex;
-      gap: 1.5rem;
-      justify-content: center;
+    .gallery-play-overlay.hidden { display: none; }
+    .best-cell { font-weight: 700; color: #9a7009; }
+    video { border-radius: 0.5rem; }
+    .step-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 2rem; height: 2rem; border-radius: 50%;
+      background: linear-gradient(135deg, #B8860B, #9a7009); color: white;
+      font-size: 0.875rem; font-weight: 600; flex-shrink: 0;
     }
-
-    .footer {
-      position: absolute;
-      bottom: 2rem;
-      font-size: 0.75rem;
-      color: var(--muted);
-      animation: fadeIn 1.2s ease 0.3s both;
+    .audio-ref {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: #e8f5e8; border: 2px solid #9CC69A; border-radius: 0.5rem;
+      padding: 0.375rem 0.75rem;
     }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .audio-ref audio { height: 28px; flex: 1; min-width: 0; }
+    .audio-ref-icon {
+      width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: #5a9a57;
+    }
+    .audio-ref-label {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      font-size: 0.75rem; font-weight: 700; color: #4a8547;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .font-display { font-family: 'DM Serif Display', Georgia, serif; }
+    .hero-gradient-bar {
+      height: 4px;
+      background: linear-gradient(90deg, #B8860B, #d4a24a, #efc785, #d4a24a, #B8860B);
+      position: fixed; top: 0; left: 0; right: 0; z-index: 60;
     }
   </style>
 </head>
-<body>
+<body class="bg-white text-gray-900 font-sans antialiased">
 
-  <div class="content">
-    <div class="logo">●</div>
-    <h1>We're getting things ready.</h1>
-    <p>Nothing fancy yet — just setting up. Check back soon, or reach out if you'd like to get in touch.</p>
+<!-- Thin gradient accent bar at very top -->
+<div class="hero-gradient-bar"></div>
+
+<!-- ============================================================
+     CONFIGURATION — Edit these arrays to change which videos appear.
+
+     Directory structure:
+       videos/
+       ├── gallery/                    # Our best results (TalkVid)
+       │   ├── {speaker}/
+       │   │   ├── {variation}.mp4     # e.g. drums.mp4, guitar.mp4
+       │   │   └── reference.mp4       # input audio reference
+       │   └── ...
+       └── comparisons/                # Side-by-side (CelebV-HQ)
+           ├── {speaker}_pair{N}/
+           │   ├── ours.mp4
+           │   ├── kling.mp4
+           │   ├── elevenlabs_wan.mp4
+           │   ├── reference.mp4       # input audio reference
+           │   └── target.mp4          # ground truth
+           └── ...
+
+     GALLERY: Set speaker ID + variation name.
+       Speakers: 1158, 1415, 36, 4198, 5335
+       Variations: box, clap, drums, glass, guitar, jackhammer,
+                   knock, metal_box, park_bird, tree
+
+     COMPARISONS: Set speaker ID + pair number.
+       Available: speaker_203 (0,8,18), speaker_714 (1,9),
+       speaker_83 (12,17,20,22,25,28,33), speaker_154 (2,10,16,19,23,27),
+       speaker_186 (5,13,26,29,31), speaker_49 (6,14,21,24,30,32,34),
+       speaker_2399 (7,15), speaker_844 (3,11), speaker_1741 (22) [TalkVid]
+     ============================================================ -->
+<script>
+// ──────────────────────────────────────────────────────────────
+//  VIDEO CONFIGURATION — Edit here to change gallery / comparisons
+// ──────────────────────────────────────────────────────────────
+
+// ── Path builders ────────────────────────────────────────────
+
+// Gallery: clean structure
+//   videos/gallery/{speaker}/{variation}.mp4
+//   videos/gallery/{speaker}/reference.mp4  (if available)
+function galleryVideo(spk, variation) { return `videos/gallery/${spk}/${variation}.mp4`; }
+function galleryRef(spk)             { return `videos/gallery/${spk}/reference.mp3`; }
+
+// Poster: same path as video but _poster.jpg
+function posterOf(videoSrc) { return videoSrc.replace(/\.mp4$/, '_poster.jpg'); }
+
+// Comparisons: clean structure
+//   videos/comparisons/{speaker}_pair{N}/ours.mp4
+//   videos/comparisons/{speaker}_pair{N}/kling.mp4
+//   videos/comparisons/{speaker}_pair{N}/elevenlabs_wan.mp4
+//   videos/comparisons/{speaker}_pair{N}/cosyvoice.mp4
+//   videos/comparisons/{speaker}_pair{N}/voicecraft.mp4
+//   videos/comparisons/{speaker}_pair{N}/reference.mp4
+//   videos/comparisons/{speaker}_pair{N}/target.mp4
+function compDir(spk, pair)        { return `videos/comparisons/${spk}_pair${pair}`; }
+function compOurs(spk, pair)       { return `${compDir(spk,pair)}/ours.mp4`; }
+function compRef(spk, pair)        { return `${compDir(spk,pair)}/reference.mp4`; }
+function compTarget(spk, pair)     { return `${compDir(spk,pair)}/target.mp4`; }
+function compKling(spk, pair)      { return `${compDir(spk,pair)}/kling.mp4`; }
+function compElevenlabs(spk, pair) { return `${compDir(spk,pair)}/elevenlabs_wan.mp4`; }
+function compCosyvoice(spk, pair)  { return `${compDir(spk,pair)}/cosyvoice.mp4`; }
+function compVoicecraft(spk, pair) { return `${compDir(spk,pair)}/voicecraft.mp4`; }
+
+// ── GALLERY PAIRS (Our best AV interaction results) ──────────
+// Add/remove/reorder entries. Each needs: speaker, variation, captions.
+const GALLERY_PAIRS = [
+  {
+    speaker: '36', variation: 'tree',
+    speech: 'Did you see that? it just feel over right there',
+    envSounds: 'A loud crack of wood splitting followed by a heavy crash of branches and trunk hitting the ground',
+  },
+  {
+    speaker: '4198', variation: 'drums',
+    speech: "Let's rock and roll I have been waiting all day",
+    envSounds: 'Loud rhythmic drum hits on snare and cymbals with sharp percussive impacts',
+  },
+  {
+    speaker: '5335', variation: 'guitar',
+    speech: 'Let me show you guys what I have been practicing',
+    envSounds: 'Acoustic guitar strumming with warm resonant tones',
+  },
+  {
+    speaker: '1415', variation: 'park_bird',
+    speech: 'What a beautiful day it is to be outside today',
+    envSounds: 'Bird chirps and takes off with loud flapping of wings nearby',
+  },
+  {
+    speaker: '1158', variation: 'jackhammer',
+    speech: 'It is so loud out here with all this noise',
+    envSounds: 'Jackhammer drilling on concrete at moderate distance in background',
+  },
+  // {
+  //   speaker: '4198', variation: 'glass',
+  //   speech: 'Oh no I can not believe that just happened here',
+  //   envSounds: 'Sudden loud crash of glass breaking and scattering on hard floor',
+  // },
+
+  // {
+  //   speaker: '5335', variation: 'clap',
+  //   speech: "Come on let's get this started and make some noise",
+  //   envSounds: 'Two sharp loud hand slaps',
+  // },
+  {
+    speaker: '4198', variation: 'knock',
+    speech: 'Listen up everyone, this is really important so pay attention',
+    envSounds: 'Distinct sharp knocking sounds on a wooden table',
+  },
+  // {
+  //   speaker: '1415', variation: 'box',
+  //   speech: "I really do not need this thing anymore, at all ",
+  //   envSounds: 'A strong thud is heard as the box drops and hits the floor',
+  // },
+];
+
+// ── COMPARISON PAIRS (Side-by-side across methods) ───────────
+// Each entry shows the same pair across Ours / Kling / ElevenLabs+Wan.
+const COMPARISON_PAIRS = [
+  // {
+  //   speaker: 'speaker_203', pair: 8,
+  //   speakingStyle: 'Resonant, emphatic, oratorical — a passionate address',
+  //   envSounds: 'Crowd claps and cheers, lively engaged atmosphere',
+  //   speech: 'things you refuse to compromise along the way laid the blue print',
+  //   promptVisual: `A medium close-up shot features Chadwick Boseman, a Black man with closely cropped dark hair, looking directly at the camera with a surprised or emphatic expression. His mouth is slightly rounded as if about to speak or having just spoken a word. He is wearing a dark blue or black suit jacket that appears to have a subtle, textured, possibly sparkly or patterned design. Underneath, he wears a black collared shirt and a black tie. In the left foreground, his left hand is raised near his chest, index finger extended, seemingly making a point. The background is a dark, muted blue color, suggesting he is on a stage or set. As the video progresses, his expression changes to one of surprise, his eyes widening, and his hands move to meet in front of him in a clapping gesture.`,
+  //   promptSounds: `The speaker's voice is resonant and projects with an emphatic, oratorical manner, suggesting a passionate address. The speaker is at a moderate distance from the microphone. A responsive crowd is present, with distinct claps and cheers, creating a lively and engaged atmosphere.`,
+  //   klingPrompt: `A medium close-up shot features Chadwick Boseman, a Black man with closely cropped dark hair, looking directly at the camera with a surprised or emphatic expression. His mouth is slightly rounded as if about to speak or having just spoken a word. He is wearing a dark blue or black suit jacket that appears to have a subtle, textured, possibly sparkly or patterned design. Underneath, he wears a black collared shirt and a black tie. In the left foreground, his left hand is raised near his chest, index finger extended, seemingly making a point. The background is a dark, muted blue color, suggesting he is on a stage or set. As the video progresses, his expression changes to one of surprise, his eyes widening, and his hands move to meet in front of him in a clapping gesture. The man&lt;&lt;&lt;voice_id&gt;&gt;&gt; says with a resonant, emphatic, passionate voice: "things you refuse to compromise along the way laid the blue print." A responsive crowd is present, with distinct claps and cheers, creating a lively and engaged atmosphere.`,
+  //   elevenLabsText: `[passionate] Things you refuse to compromise along the way... [emphatic] LAID THE BLUE PRINT!`,
+  // },
+  // {
+  //   speaker: 'speaker_714', pair: 1,
+  //   speakingStyle: 'Calm and deliberate, low-pitched resonant tone',
+  //   envSounds: 'Distant machinery sound',
+  //   speech: 'I understand this is a difficult moment for you. But we have',
+  //   promptVisual: `A close-up shot focuses on an older man with short, neatly combed gray hair and a salt-and-pepper goatee. He is wearing round, thin-rimmed eyeglasses. His expression is serious, and he appears to be looking slightly upward and to his right. He is wearing a dark blue collared shirt. The background is blurred but suggests an outdoor, sunny setting, likely near water (sea or lake), with greenery and some distant white or light-colored buildings on a shore visible.`,
+  //   promptSounds: `The speaker's voice is low in volume, with a grave and somber tone, delivered in a deliberate, hushed manner, very close to the microphone. A low, sustained, ominous musical drone creates a tense and dramatic atmosphere.`,
+  //   klingPrompt: `A close-up shot of an older man with messy, grayish-white hair and a prominent, somewhat theatrical mustache. He has lines on his face, suggesting age or stress, and there is a slight reddish discoloration on his left cheekbone. He is looking slightly off-camera to the left, seemingly at another person whose dark, curly hair is visible on the far left edge of the frame. The lighting is dramatic, with warm, upward-facing light illuminating his face from below, highlighting his features against a dark, blurry background that suggests an interior with some distant, out-of-focus lights (possibly yellow/green bokeh). He appears to be speaking earnestly. The man&lt;&lt;&lt;voice_id&gt;&gt;&gt; says with a low-pitched, resonant, calm, deliberate voice: "I understand this is a difficult moment for you. But we have." A distant machinery sound is present.`,
+  //   elevenLabsText: `[thoughtful] I understand this is a difficult moment for you. [short pause] But we have...`,
+  // },
+  // {
+  //   speaker: 'speaker_83', pair: 12,
+  //   speakingStyle: 'Conversational with amused tone, animated',
+  //   envSounds: 'Clear audience laughter reacting to the speaker',
+  //   speech: "I'm huge. I'm huge. Uh, I No, not really.",
+  //   promptVisual: `A medium close-up shot of Rowan Atkinson, a middle-aged man with short, salt-and-pepper hair. He is looking slightly upward and to the left with an expressive, perhaps slightly bemused or thoughtful expression, his mouth slightly open. He is wearing a dark, possibly corduroy jacket over a blue and white checkered button-down shirt. The background is blurred, featuring a prominent purple/lavender section at the top and a lower section with what appears to be a brick wall texture, suggesting a studio or interview setting.`,
+  //   promptSounds: `The speaker's voice is conversational with an amused tone. The delivery is animated and engaging, and the speaker is close to the microphone. A clear layer of audience laughter is present, reacting to the speaker.`,
+  //   klingPrompt: `A medium close-up shot of Rowan Atkinson, a middle-aged man with short, salt-and-pepper hair. He is looking slightly upward and to the left with an expressive, perhaps slightly bemused or thoughtful expression, his mouth slightly open. He is wearing a dark, possibly corduroy jacket over a blue and white checkered button-down shirt. The background is blurred, featuring a prominent purple/lavender section at the top and a lower section with what appears to be a brick wall texture, suggesting a studio or interview setting. The man&lt;&lt;&lt;voice_id&gt;&gt;&gt; says with a conversational, animated voice: "I'm huge. I'm huge. Uh, I No, not really." A clear layer of audience laughter is present, reacting to the speaker.`,
+  //   elevenLabsText: `[loud, boasting] I'm HUGE! [emphatic] I'm HUGE! [chuckles] Uh, I... [amused] No, not really.`,
+  // },
+  // {
+  //   speaker: 'speaker_154', pair: 16,
+  //   speakingStyle: 'Soft, gentle breathy tone, reflective mood',
+  //   envSounds: 'Soft melancholic string music, somber atmosphere',
+  //   speech: 'because of you.',
+  //   promptVisual: `A close-up shot of a woman with reddish-brown curly hair. She has fair skin and appears to be on the verge of tears or is actively crying, with moisture visible on her cheeks, particularly below her left eye. Her eyes are wide and appear sad or distressed. Her mouth is slightly open as if she is speaking or gasping. The background is dark and somewhat blurry, suggesting an indoor setting with other people vaguely visible in the background (one on the right side). The lighting focuses on her face.`,
+  //   promptSounds: `A soft, low-volume voice speaks with a gentle, breathy tone, conveying a reflective mood. The speaker is very close to the microphone. Soft, low-pitched string music plays a melancholic melody, creating a somber atmosphere.`,
+  //   klingPrompt: `A close-up shot of a woman with reddish-brown curly hair. She has fair skin and appears to be on the verge of tears or is actively crying, with moisture visible on her cheeks, particularly below her left eye. Her eyes are wide and appear sad or distressed. Her mouth is slightly open as if she is speaking or gasping. The background is dark and somewhat blurry, suggesting an indoor setting with other people vaguely visible in the background (one on the right side). The lighting focuses on her face. The woman&lt;&lt;&lt;voice_id&gt;&gt;&gt; says with a soft, gentle, breathy, reflective voice: "because of you." Soft, low-pitched string music plays a melancholic melody, creating a somber atmosphere.`,
+  //   elevenLabsText: `[crying] [breathy] because of you...`,
+  // },
+  {
+    speaker: 'speaker_154', pair: 2,
+    speakingStyle: 'Calm, soft, gentle — almost singing',
+    envSounds: 'Minimal background noise, close to microphone',
+    speech: 'If you walk amongst the burning.',
+    promptVisual: `A medium close-up shot of a woman with short, curly brown hair, presumably Susan Sarandon, looking distraught and tearful behind thick, vertical brown bars, suggesting she is in a prison cell or similar confinement. She is wearing a light-colored, possibly white or off-white, top. Her face shows emotional distress, with slightly red eyes and a slightly open mouth as if she is speaking or has just spoken. The background is blurred but appears to show shelves or compartments with a warm, amber glow behind her.`,
+    promptSounds: `The speaker's voice is calm and soft, delivered in a gentle, almost singing manner. The speaker is close to the microphone.`,
+    klingPrompt: `A medium close-up shot of a woman with short, curly brown hair, presumably Susan Sarandon, looking distraught and tearful behind thick, vertical brown bars, suggesting she is in a prison cell or similar confinement. She is wearing a light-colored, possibly white or off-white, top. Her face shows emotional distress, with slightly red eyes and a slightly open mouth as if she is speaking or has just spoken. The background is blurred but appears to show shelves or compartments with a warm, amber glow behind her. The woman&lt;&lt;&lt;voice_id&gt;&gt;&gt; says with a calm, soft, gentle voice: "If you walk amongst the burning."`,
+    elevenLabsText: `[somberly] If you walk amongst the burning...`,
+  },
+  {
+    speaker: 'speaker_844', pair: 3,
+    speakingStyle: 'Calm, conversational tone at moderate volume',
+    envSounds: 'Faint, mellow instrumental music playing softly in background',
+    speech: 'I heard something she called.',
+    promptVisual: `A medium close-up shot of a middle-aged to older man with graying, dark, curly hair and thick, dark eyebrows. He is wearing clear-framed glasses and a light-colored, vertically striped button-down shirt. He appears to be speaking, with a somewhat serious or contemplative expression on his face. The background is soft-focused, showing light-colored patterned wallpaper on the left and a darker, wooden or brown surface behind him.`,
+    promptSounds: `The speaker has a moderate volume and a calm, conversational tone. The speaker is at a moderate distance from the microphone. Faint, mellow instrumental music plays softly in the background.`,
+    klingPrompt: `A medium close-up shot of a middle-aged to older man with graying, dark, curly hair and thick, dark eyebrows. He is wearing clear-framed glasses and a light-colored, vertically striped button-down shirt. He appears to be speaking, with a somewhat serious or contemplative expression on his face. The background is soft-focused, showing light-colored patterned wallpaper on the left and a darker, wooden or brown surface behind him. The man&lt;&lt;&lt;voice_id&gt;&gt;&gt; says with a calm, conversational voice: "I heard something she called." Faint, mellow instrumental music plays softly in the background.`,
+    elevenLabsText: `[thoughtful] I heard something she called...`,
+  },
+  {
+    speaker: 'speaker_49', pair: 34,
+    speakingStyle: 'Lighthearted, conversational, moderate volume',
+    envSounds: 'Interjecting voice and distinct laughter from a small group, lively atmosphere',
+    speech: 'the raisins. Yes. And then Bill and I, the science.',
+    promptVisual: `A medium close-up shot of actor Zach Galifianakis sitting on a talk show set, likely indoors, in front of a blurred background that suggests a warm, dark interior setting, possibly with architectural details like columns or arches visible in muted colors (purples, browns, and dark reds). He has thick, dark, slightly messy hair and a full, well-groomed beard that is salt-and-pepper in color. He is wearing a dark gray or tweed blazer over a light blue, unbuttoned collared shirt with a dark undershirt visible at the neck. A small lavalier microphone is clipped to his shirt. In the first frame, his eyes are closed, and his mouth is slightly open, suggesting a reaction to something. In subsequent frames, his eyes open slightly, and he looks upward and slightly to his right as he speaks.`,
+    promptSounds: `The main speaker has a moderate volume and a lighthearted, conversational tone, speaking from a moderate distance to the microphone. There is an interjecting voice and distinct laughter from a small group, creating a lively atmosphere.`,
+    klingPrompt: `A medium close-up shot of actor Zach Galifianakis sitting on a talk show set, likely indoors, in front of a blurred background that suggests a warm, dark interior setting, possibly with architectural details like columns or arches visible in muted colors (purples, browns, and dark reds). He has thick, dark, slightly messy hair and a full, well-groomed beard that is salt-and-pepper in color. He is wearing a dark gray or tweed blazer over a light blue, unbuttoned collared shirt with a dark undershirt visible at the neck. A small lavalier microphone is clipped to his shirt. In the first frame, his eyes are closed, and his mouth is slightly open, suggesting a reaction to something. In subsequent frames, his eyes open slightly, and he looks upward and slightly to his right as he speaks. The man&lt;&lt;&lt;voice_id&gt;&gt;&gt; says with a lighthearted, conversational voice: "the raisins. Yes. And then Bill and I, the science." There is an interjecting voice and distinct laughter from a small group, creating a lively atmosphere.`,
+    elevenLabsText: `[thoughtful] the raisins. Yes. [chuckles] And then Bill and I, the science...`,
+  },
+  {
+    speaker: 'speaker_154', pair: 23,
+    speakingStyle: 'Loud and forceful, emphatic, slightly strained — almost shouting',
+    envSounds: 'Low-level electrical hum or buzz in background',
+    speech: 'part-time at Elamont Junior College. English 101 and beginning',
+    promptVisual: `A medium close-up shot of a woman with reddish-brown, curly hair and pronounced makeup, including dark eyeliner and lipstick. She is wearing a square, dark earring with a lighter center. Her mouth is open wide as if speaking loudly or yelling, and her eyes are wide, looking slightly upward and to the right toward someone out of frame. The background is slightly out of focus and appears to be an indoor setting with framed art or pictures and what looks like a wooden clock or decorative object on a surface behind her.`,
+    promptSounds: `The voice is loud and projected with an emphatic, somewhat strained tone, delivered in a declarative manner as if addressing a group. The speaker is close to the microphone. A constant, low-level electrical hum or buzz is audible in the background.`,
+    klingPrompt: `A medium close-up shot of a woman with reddish-brown, curly hair and pronounced makeup, including dark eyeliner and lipstick. She is wearing a square, dark earring with a lighter center. Her mouth is open wide as if speaking loudly or yelling, and her eyes are wide, looking slightly upward and to the right toward someone out of frame. The background is slightly out of focus and appears to be an indoor setting with framed art or pictures and what looks like a wooden clock or decorative object on a surface behind her. The woman&lt;&lt;&lt;voice_id&gt;&gt;&gt; says with a loud, emphatic, strained voice: "part-time at Elamont Junior College. English 101 and beginning."`,
+    elevenLabsText: `[loudly] [emphatic] [strained] part-time at Elamont Junior College! English 101 and beginning...`,
+  },
+  {
+    speaker: 'speaker_1741', pair: 22,
+    speakingStyle: 'Moderate, calm tone in a conversational manner, close to the microphone',
+    envSounds: 'Beaty music plays softly in the background, providing a gentle, ambient melody',
+    speech: "So that's my list of 30 items that I no longer buy. I hope that it inspires you to maybe",
+    promptVisual: `A medium close-up shot features a woman with long, dark, wavy hair and fair skin, looking directly at the camera with a slight smile. She is wearing a light blue or mint-colored tank top and small hoop earrings. The background suggests a bedroom setting; to her left is a dark gray upholstered headboard with blue and gray bedding visible on the bed. To her right, an open doorway leads to another area, possibly a hallway or staircase with wooden banisters visible. The room is softly lit with natural light.`,
+    promptSounds: `The speaker has a moderate, calm tone and a conversational manner, speaking close to the microphone. Beaty music plays softly in the background, providing a gentle, ambient melody.`,
+    klingPrompt: `A medium close-up shot features a woman with long, dark, wavy hair and fair skin, looking directly at the camera with a slight smile. She is wearing a light blue or mint-colored tank top and small hoop earrings. The background suggests a bedroom setting; to her left is a dark gray upholstered headboard with blue and gray bedding visible on the bed. To her right, an open doorway leads to another area, possibly a hallway or staircase with wooden banisters visible. The room is softly lit with natural light. The woman&lt;&lt;&lt;voice_id&gt;&gt;&gt; says with a moderate, calm, conversational voice: "So that's my list of 30 items that I no longer buy. I hope that it inspires you to maybe." Beaty music plays softly in the background, providing a gentle, ambient melody.`,
+    elevenLabsText: `[calm] So that's my list of 30 items that I no longer buy. I hope that it inspires you to maybe...`,
+  },
+];
+</script>
+
+<!-- ===================== STICKY NAV ===================== -->
+<nav class="sticky top-1 z-50 bg-white/95 backdrop-blur-md shadow-sm">
+  <div class="max-w-5xl mx-auto px-6 h-12 flex items-center justify-between">
+    <a href="#" class="text-base font-bold tracking-tight text-brand-700">ID-LoRA</a>
+    <div class="hidden md:flex items-center gap-5 text-sm font-medium text-gray-400">
+      <a href="#gallery" class="hover:text-brand-600 transition">Results</a>
+      <a href="#comparisons" class="hover:text-brand-600 transition">Comparisons</a>
+      <a href="#user-study" class="hover:text-brand-600 transition">User Study</a>
+      <a href="#abstract" class="hover:text-brand-600 transition">Abstract</a>
+      <a href="#method" class="hover:text-brand-600 transition">Method</a>
+      <a href="#metrics" class="hover:text-brand-600 transition">Metrics</a>
+    </div>
   </div>
+</nav>
+
+<!-- ===================== HERO ===================== -->
+<section class="max-w-5xl mx-auto px-6 pt-16 pb-12">
+  <div class="flex flex-col lg:flex-row items-start gap-10">
+    <!-- Left: Text -->
+    <div class="flex-1 min-w-0 lg:pt-4">
+      <h1 class="text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-4 text-gray-900"><span class="inline-block px-5 py-1 rounded-2xl" style="background:#FDE0B4">ID-LoRA</span></h1>
+      <p class="text-lg md:text-xl text-gray-500 mb-3 leading-snug max-w-lg">
+        Identity-Driven Audio-Video Personalization with In-Context LoRA
+      </p>
+      <p class="text-sm text-gray-400 max-w-md mb-8 leading-relaxed">
+        Generate video and audio of a specific person from a single text prompt, a reference image, and a short audio clip — all in one model.
+      </p>
+      <div class="flex flex-wrap gap-2.5 mb-5">
+        <a href="https://arxiv.org/pdf/2603.10256v1" target="_blank" class="inline-flex items-center gap-2 bg-brand-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition shadow-sm">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"/></svg>
+          Paper
+        </a>
+        <a href="https://github.com/ID-LoRA/ID-LoRA/tree/main" target="_blank" class="inline-flex items-center gap-2 border border-gray-200 text-gray-600 px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+          Code
+        </a>
+        <a href="https://huggingface.co/AviadDahan" target="_blank" class="inline-flex items-center gap-2 border border-gray-200 text-gray-600 px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-1.5 7a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm6 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm-8.25 4.5c0-.414.336-.75.75-.75h6a.75.75 0 01.65 1.126C14.85 15.276 13.5 16 12 16s-2.85-.724-3.65-2.124a.75.75 0 01-.1-.376z"/></svg>
+          Models
+        </a>
+        <button onclick="document.getElementById('bibtex-section').scrollIntoView({behavior:'smooth'})" class="inline-flex items-center gap-2 border border-gray-200 text-gray-600 px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
+          BibTeX
+        </button>
+      </div>
+      <p class="text-sm text-gray-500 whitespace-nowrap">Aviad Dahan<sup>*</sup> &nbsp; Moran Yanuka<sup>*</sup> &nbsp; Noa Kraicer &nbsp; Lior Wolf &nbsp; Raja Giryes</p>
+      <p class="text-xs text-gray-400 mt-1"><sup>*</sup>Equal contribution</p>
+    </div>
+    <!-- Right: Explainer Video -->
+    <div class="lg:w-[52%] shrink-0">
+      <div class="rounded-xl overflow-hidden shadow-lg bg-white">
+        <video src="videos/id_lora_video.mp4" controls playsinline poster="images/teaser-fig-v4.png" class="w-full aspect-video" style="background:white"></video>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== KEY STATS ===================== -->
+<section class="max-w-5xl mx-auto px-6 pb-16">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="av-card p-6 text-center">
+      <div class="text-5xl font-black mb-1 bg-gradient-to-r from-brand-600 to-brand-400 bg-clip-text text-transparent">73%</div>
+      <p class="text-sm text-gray-500">preferred over <strong>Kling 2.6 Pro</strong> for voice similarity</p>
+    </div>
+    <div class="av-card p-6 text-center">
+      <div class="text-5xl font-black mb-1 bg-gradient-to-r from-brand-600 to-brand-400 bg-clip-text text-transparent">81%</div>
+      <p class="text-sm text-gray-500">preferred over <strong>ElevenLabs v3+Wan2.2</strong> for voice similarity</p>
+    </div>
+    <div class="av-card p-6 text-center">
+      <div class="text-5xl font-black mb-1 bg-gradient-to-r from-brand-600 to-brand-400 bg-clip-text text-transparent">~3K</div>
+      <p class="text-sm text-gray-500">training pairs, <strong>single GPU</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VIDEO RESULTS GALLERY ===================== -->
+<section id="gallery" class="max-w-5xl mx-auto px-6 pt-24 pb-20">
+  <h2 class="text-3xl font-display mb-2">Audio-Visual Interactions <svg class="inline w-7 h-7 text-amber-400 -mt-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.09 6.26L20.18 9.27l-5.09 3.9L16.18 20 12 16.77 7.82 20l1.09-6.83L3.82 9.27l6.09-1.01L12 2z"/></svg></h2>
+  <p class="text-gray-500 mb-8">Each video is <strong class="text-gray-600">fully generated</strong> — placing a real identity in a new scene with physical interactions that produce sound, all from a single text prompt, a reference image, and a short audio clip.</p>
+  <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+    <!-- Populated by JS -->
+  </div>
+</section>
+
+<!-- ===================== SIDE-BY-SIDE COMPARISONS ===================== -->
+<section id="comparisons" class="bg-gray-50 py-24">
+  <div class="max-w-5xl mx-auto px-6">
+    <h2 class="text-3xl font-display mb-2">Side-by-Side Comparisons</h2>
+    <p class="text-gray-500 mb-8">Same prompt and reference, different methods. Click any video to play — unmute to hear the difference.</p>
+    <div id="comparisons-container" class="space-y-12">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ===================== USER STUDY ===================== -->
+<section id="user-study" class="max-w-5xl mx-auto px-6 pt-24 pb-20">
+  <h2 class="text-3xl font-display mb-2">User Study</h2>
+  <p class="text-gray-500 mb-8">A/B preference test on Amazon Mechanical Turk (hard split — cross-video reference-target pairs).</p>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 max-w-3xl mx-auto">
+    <div class="av-card overflow-hidden">
+      <img src="images/preference_chart_kling.png" alt="Preference chart: Ours vs. Kling 2.6 Pro" class="w-full">
+      <div class="p-4">
+        <p class="text-sm text-gray-500"><strong>vs. Kling 2.6 Pro.</strong> ID-LoRA is preferred 73% for voice similarity, 65% for speaking style, and 55% for environment sounds.</p>
+      </div>
+    </div>
+    <div class="av-card overflow-hidden">
+      <img src="images/preference_chart_elevenlabs_wan.png" alt="Preference chart: Ours vs. ElevenLabs v3 + Wan2.2" class="w-full">
+      <div class="p-4">
+        <p class="text-sm text-gray-500"><strong>vs. ElevenLabs v3 + Wan2.2.</strong> ID-LoRA is preferred 81% for voice similarity, 56% for speaking style, and 69% for environment sounds.</p>
+      </div>
+    </div>
+  </div>
+  <div class="av-card overflow-hidden max-w-xl mx-auto">
+    <img src="images/mos_plot.png" alt="MOS plot" class="w-full">
+    <div class="p-4">
+      <p class="text-sm text-gray-500"><strong>Mean Opinion Scores.</strong> ID-LoRA achieves an overall MOS of 3.05 vs. 2.90 for Kling 2.6 Pro, winning on 8 of 10 physical interaction scenarios.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ABSTRACT ===================== -->
+<section id="abstract" class="bg-gray-50 py-24">
+  <div class="max-w-3xl mx-auto px-6">
+    <h2 class="text-3xl font-display mb-8">Abstract</h2>
+    <div class="text-lg leading-relaxed text-gray-600 space-y-6">
+      <p>
+        Existing video personalization methods preserve visual likeness but treat video and audio separately. Without access to the visual scene, audio models cannot synchronize sounds with on-screen actions; and because classical voice-cloning models condition only on a reference recording, a text prompt cannot redirect speaking style or acoustic environment. Although prompt-conditioned audio models could offer such control, they lack access to the visual scene.
+      </p>
+      <p>
+        We propose <strong class="text-gray-900">ID-LoRA</strong> (Identity-Driven In-Context LoRA), which jointly generates a subject's appearance and voice in a single model, letting a text prompt, a reference image, and a short audio clip govern both modalities together. ID-LoRA adapts the LTX-2 joint audio-video diffusion backbone via parameter-efficient In-Context LoRA and, to our knowledge, is the first method to personalize visual appearance and voice within a single generative pass. Two challenges arise from this formulation. Reference and generation tokens share the same positional-encoding space, making them hard to distinguish; we address this with <strong class="text-gray-900">negative temporal positions</strong>, which place reference tokens in a disjoint region of the RoPE space while preserving their internal temporal structure. Furthermore, speaker characteristics tend to be diluted during denoising; we introduce <strong class="text-gray-900">identity guidance</strong>, a classifier-free guidance variant that amplifies speaker-specific features by contrasting predictions with and without the reference signal.
+      </p>
+      <p>
+        In human preference studies ID-LoRA is preferred over Kling 2.6 Pro, the leading commercial unified model with voice personalization capabilities, by 73% of annotators for voice similarity and 65% for speaking style. Automatic metrics confirm these gains: on cross-environment settings, speaker similarity improves by 24% over Kling, with the gap widening as reference and target conditions diverge. ID-LoRA achieves these results with only approximately 3K training pairs on a single GPU.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== METHOD ===================== -->
+<section id="method" class="max-w-5xl mx-auto px-6 pt-24 pb-20">
+  <h2 class="text-3xl font-display mb-8">Method</h2>
+  <div class="av-card overflow-hidden mb-10">
+    <img src="images/fig-method-f.png" alt="ID-LoRA architecture diagram" class="w-full">
+    <div class="p-4">
+      <p class="text-sm text-gray-500"><strong>Architecture overview.</strong> ID-LoRA adapts the LTX-2 dual-stream DiT via In-Context LoRA. A reference audio clip is encoded and concatenated with noisy target latents, while the video stream uses standard text-to-video generation with first-frame conditioning.</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="av-card p-6">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="step-num">1</span>
+        <h3 class="font-semibold">In-Context Audio Conditioning</h3>
+      </div>
+      <p class="text-sm text-gray-500 leading-relaxed">Reference audio is encoded into latents and concatenated with noisy target audio along the sequence dimension. The model learns to extract speaker identity from the reference during denoising.</p>
+    </div>
+    <div class="av-card p-6">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="step-num">2</span>
+        <h3 class="font-semibold">Negative Temporal Positions</h3>
+      </div>
+      <p class="text-sm text-gray-500 leading-relaxed">Reference tokens receive negative RoPE positions [-T, 0), while target tokens occupy [0, T]. This cleanly separates reference from target in attention while preserving temporal structure.</p>
+    </div>
+    <div class="av-card p-6">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="step-num">3</span>
+        <h3 class="font-semibold">Identity Guidance</h3>
+      </div>
+      <p class="text-sm text-gray-500 leading-relaxed">A CFG variant that amplifies speaker-specific features by extrapolating between predictions with and without the reference signal. Scale 4.0 yields a +9% speaker similarity improvement.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== QUANTITATIVE RESULTS ===================== -->
+<section id="metrics" class="bg-gray-50 py-24">
+  <div class="max-w-5xl mx-auto px-6">
+    <h2 class="text-3xl font-display mb-2">Quantitative Results</h2>
+    <p class="text-gray-500 mb-4">Comparison across three evaluation splits. Best in bold per column.</p>
+    <div class="flex gap-2 mb-4">
+      <button onclick="showSplit('hard')" id="tab-hard" class="split-tab px-4 py-2 rounded-full text-sm font-medium transition bg-brand-600 text-white">CelebV-HQ Hard</button>
+      <button onclick="showSplit('easy')" id="tab-easy" class="split-tab px-4 py-2 rounded-full text-sm font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">CelebV-HQ Easy</button>
+      <button onclick="showSplit('talkvid')" id="tab-talkvid" class="split-tab px-4 py-2 rounded-full text-sm font-medium transition bg-gray-100 text-gray-600 hover:bg-gray-200">TalkVid</button>
+    </div>
+
+    <!-- CelebV-HQ Hard (cross-video) -->
+    <div id="split-hard" class="split-panel av-card overflow-hidden mb-6">
+      <p class="px-6 pt-4 text-xs text-gray-400">Cross-video reference-target pairs where reference and target environments differ.</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="text-left px-6 py-3 font-semibold">Method</th>
+              <th class="text-center px-4 py-3 font-semibold">Spk Sim &uarr;</th>
+              <th class="text-center px-4 py-3 font-semibold">Face Sim &uarr;</th>
+              <th class="text-center px-4 py-3 font-semibold">LSE-D &darr;</th>
+              <th class="text-center px-4 py-3 font-semibold">LSE-C &uarr;</th>
+              <th class="text-center px-4 py-3 font-semibold">CLAP &uarr;</th>
+              <th class="text-center px-4 py-3 font-semibold">WER &darr;</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr class="bg-gray-50/50">
+              <td class="px-6 py-3 font-semibold">ID-LoRA (Ours)</td>
+              <td class="text-center px-4 py-3 best-cell">0.477</td>
+              <td class="text-center px-4 py-3">0.874</td>
+              <td class="text-center px-4 py-3 best-cell">8.49</td>
+              <td class="text-center px-4 py-3 best-cell">3.90</td>
+              <td class="text-center px-4 py-3 best-cell">0.363</td>
+              <td class="text-center px-4 py-3 best-cell">0.113</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3">Kling 2.6 Pro</td>
+              <td class="text-center px-4 py-3">0.385</td>
+              <td class="text-center px-4 py-3">0.854</td>
+              <td class="text-center px-4 py-3">9.49</td>
+              <td class="text-center px-4 py-3">3.47</td>
+              <td class="text-center px-4 py-3">0.316</td>
+              <td class="text-center px-4 py-3">0.121</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3">CosyVoice 3.0 + Wan2.2</td>
+              <td class="text-center px-4 py-3">0.391</td>
+              <td class="text-center px-4 py-3">0.890</td>
+              <td class="text-center px-4 py-3">11.40</td>
+              <td class="text-center px-4 py-3">1.50</td>
+              <td class="text-center px-4 py-3">0.249</td>
+              <td class="text-center px-4 py-3">0.362</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3">VoiceCraft + Wan2.2</td>
+              <td class="text-center px-4 py-3">0.344</td>
+              <td class="text-center px-4 py-3">0.892</td>
+              <td class="text-center px-4 py-3">10.60</td>
+              <td class="text-center px-4 py-3">1.33</td>
+              <td class="text-center px-4 py-3">0.258</td>
+              <td class="text-center px-4 py-3">0.427</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3">ElevenLabs v3 + Wan2.2</td>
+              <td class="text-center px-4 py-3">0.357</td>
+              <td class="text-center px-4 py-3 best-cell">0.894</td>
+              <td class="text-center px-4 py-3">11.86</td>
+              <td class="text-center px-4 py-3">1.72</td>
+              <td class="text-center px-4 py-3">0.238</td>
+              <td class="text-center px-4 py-3">0.154</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CelebV-HQ Easy (same-video) -->
+    <div id="split-easy" class="split-panel av-card overflow-hidden mb-6 hidden">
+      <p class="px-6 pt-4 text-xs text-gray-400">Same-video reference-target pairs (voice replication scenario).</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="text-left px-6 py-3 font-semibold">Method</th>
+              <th class="text-center px-4 py-3 font-semibold">Spk Sim &uarr;</th>
+              <th class="text-center px-4 py-3 font-semibold">Face Sim &uarr;</th>
+              <th class="text-center px-4 py-3 font-semibold">LSE-D &darr;</th>
+              <th class="text-center px-4 py-3 font-semibold">LSE-C &uarr;</th>
+              <th class="text-center px-4 py-3 font-semibold">CLAP &uarr;</th>
+              <th class="text-center px-4 py-3 font-semibold">WER &darr;</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr class="bg-gray-50/50">
+              <td class="px-6 py-3 font-semibold">ID-LoRA (Ours)</td>
+              <td class="text-center px-4 py-3 best-cell">0.573</td>
+              <td class="text-center px-4 py-3">0.870</td>
+              <td class="text-center px-4 py-3 best-cell">8.20</td>
+              <td class="text-center px-4 py-3 best-cell">4.43</td>
+              <td class="text-center px-4 py-3 best-cell">0.372</td>
+              <td class="text-center px-4 py-3">0.106</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3">Kling 2.6 Pro</td>
+              <td class="text-center px-4 py-3">0.487</td>
+              <td class="text-center px-4 py-3">0.847</td>
+              <td class="text-center px-4 py-3">10.24</td>
+              <td class="text-center px-4 py-3">3.01</td>
+              <td class="text-center px-4 py-3">0.327</td>
+              <td class="text-center px-4 py-3 best-cell">0.046</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3">CosyVoice 3.0 + Wan2.2</td>
+              <td class="text-center px-4 py-3">0.510</td>
+              <td class="text-center px-4 py-3 best-cell">0.886</td>
+              <td class="text-center px-4 py-3">11.27</td>
+              <td class="text-center px-4 py-3">1.53</td>
+              <td class="text-center px-4 py-3">0.301</td>
+              <td class="text-center px-4 py-3">0.273</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3">VoiceCraft + Wan2.2</td>
+              <td class="text-center px-4 py-3">0.412</td>
+              <td class="text-center px-4 py-3">0.879</td>
+              <td class="text-center px-4 py-3">10.99</td>
+              <td class="text-center px-4 py-3">1.48</td>
+              <td class="text-center px-4 py-3">0.335</td>
+              <td class="text-center px-4 py-3">0.241</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3">ElevenLabs v3 + Wan2.2</td>
+              <td class="text-center px-4 py-3">0.413</td>
+              <td class="text-center px-4 py-3">0.879</td>
+              <td class="text-center px-4 py-3">11.98</td>
+              <td class="text-center px-4 py-3">1.51</td>
+              <td class="text-center px-4 py-3">0.266</td>
+              <td class="text-center px-4 py-3">0.180</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TalkVid -->
+    <div id="split-talkvid" class="split-panel av-card overflow-hidden mb-6 hidden">
+      <p class="px-6 pt-4 text-xs text-gray-400">TalkVid test set — 49 videos from 41 held-out speakers.</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="text-left px-6 py-3 font-semibold">Method</th>
+              <th class="text-center px-4 py-3 font-semibold">Spk Sim &uarr;</th>
+              <th class="text-center px-4 py-3 font-semibold">Face Sim &uarr;</th>
+              <th class="text-center px-4 py-3 font-semibold">LSE-D &darr;</th>
+              <th class="text-center px-4 py-3 font-semibold">LSE-C &uarr;</th>
+              <th class="text-center px-4 py-3 font-semibold">CLAP &uarr;</th>
+              <th class="text-center px-4 py-3 font-semibold">WER &darr;</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr class="bg-gray-50/50">
+              <td class="px-6 py-3 font-semibold">ID-LoRA (Celeb&rarr;TalkVid)</td>
+              <td class="text-center px-4 py-3">0.595</td>
+              <td class="text-center px-4 py-3">0.767</td>
+              <td class="text-center px-4 py-3 best-cell">10.32</td>
+              <td class="text-center px-4 py-3 best-cell">3.12</td>
+              <td class="text-center px-4 py-3 best-cell">0.412</td>
+              <td class="text-center px-4 py-3">0.065</td>
+            </tr>
+            <tr class="bg-gray-50/50">
+              <td class="px-6 py-3 font-semibold">ID-LoRA (Ours)</td>
+              <td class="text-center px-4 py-3 best-cell">0.599</td>
+              <td class="text-center px-4 py-3">0.772</td>
+              <td class="text-center px-4 py-3">10.62</td>
+              <td class="text-center px-4 py-3">3.09</td>
+              <td class="text-center px-4 py-3">0.385</td>
+              <td class="text-center px-4 py-3">0.054</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3">Kling 2.6 Pro</td>
+              <td class="text-center px-4 py-3">0.506</td>
+              <td class="text-center px-4 py-3">0.754</td>
+              <td class="text-center px-4 py-3">11.59</td>
+              <td class="text-center px-4 py-3">2.40</td>
+              <td class="text-center px-4 py-3">0.326</td>
+              <td class="text-center px-4 py-3 best-cell">0.040</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3">CosyVoice 3.0 + Wan2.2</td>
+              <td class="text-center px-4 py-3">0.579</td>
+              <td class="text-center px-4 py-3">0.770</td>
+              <td class="text-center px-4 py-3">12.34</td>
+              <td class="text-center px-4 py-3">1.20</td>
+              <td class="text-center px-4 py-3">0.315</td>
+              <td class="text-center px-4 py-3">0.223</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3">VoiceCraft + Wan2.2</td>
+              <td class="text-center px-4 py-3">0.457</td>
+              <td class="text-center px-4 py-3 best-cell">0.773</td>
+              <td class="text-center px-4 py-3">12.15</td>
+              <td class="text-center px-4 py-3">1.22</td>
+              <td class="text-center px-4 py-3">0.407</td>
+              <td class="text-center px-4 py-3">0.171</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3">ElevenLabs v3 + Wan2.2</td>
+              <td class="text-center px-4 py-3">0.491</td>
+              <td class="text-center px-4 py-3">0.772</td>
+              <td class="text-center px-4 py-3">12.42</td>
+              <td class="text-center px-4 py-3">1.31</td>
+              <td class="text-center px-4 py-3">0.319</td>
+              <td class="text-center px-4 py-3">0.064</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="av-card p-6 border-l-4 border-l-brand-600">
+      <p class="text-sm text-gray-600">
+        <strong>24% speaker similarity improvement</strong> over Kling 2.6 Pro on the hard split, where reference and target environments diverge.
+        The gap widens on harder cross-environment settings — demonstrating the advantage of unified generation over cascaded pipelines.
+        ID-LoRA also leads in lip synchronization (LSE-D/C) and audio prompt adherence (CLAP).
+      </p>
+    </div>
+  </div>
+</section>
+<!-- ===================== BIBTEX ===================== -->
+<section id="bibtex-section" class="max-w-5xl mx-auto px-6 pt-24 pb-20">
+  <h2 class="text-3xl font-display mb-6">Citation</h2>
+  <div class="av-card relative">
+    <button onclick="copyBibtex()" id="copy-btn" class="absolute top-3 right-3 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-medium transition">
+      Copy
+    </button>
+    <pre id="bibtex-text" class="p-6 text-sm text-gray-600 overflow-x-auto leading-relaxed"><code>@misc{dahan2026idloraidentitydrivenaudiovideopersonalization,
+  title     = {ID-LoRA: Identity-Driven Audio-Video Personalization
+               with In-Context LoRA},
+  author    = {Aviad Dahan and Moran Yanuka and Noa Kraicer and Lior Wolf and Raja Giryes},
+  year      = {2026},
+  eprint    = {2603.10256},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.SD},
+  url       = {https://arxiv.org/abs/2603.10256}
+}</code></pre>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="py-10" style="background: #2d2103;">
+  <div class="max-w-5xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+    <span class="text-sm font-bold tracking-tight text-white">ID-LoRA</span>
+    <p class="text-xs text-amber-200/60">&copy; 2026 Aviad Dahan, Moran Yanuka, Noa Kraicer, Lior Wolf, Raja Giryes</p>
+  </div>
+</footer>
+
+<!-- ===================== FLOATING CONTROLS ===================== -->
+<div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+  <button onclick="muteAllVideos()" id="global-mute-btn" class="text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition" style="background:rgba(0,0,0,0.55)" onmouseenter="this.style.background='rgba(0,0,0,0.7)'" onmouseleave="this.style.background='rgba(0,0,0,0.55)'" title="Mute all videos">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+    </svg>
+  </button>
+</div>
+<!-- ===================== JAVASCRIPT ===================== -->
+<script>
+// ── Render Gallery ───────────────────────────────────────────
+function renderGallery() {
+  const grid = document.getElementById('gallery-grid');
+  grid.innerHTML = GALLERY_PAIRS.map((p, i) => {
+    const id = `gallery-${i}`;
+    return `
+      <div class="av-card overflow-hidden flex flex-col h-full">
+        <div class="video-wrap relative">
+          <video id="${id}" src="${galleryVideo(p.speaker, p.variation)}" poster="${posterOf(galleryVideo(p.speaker, p.variation))}" muted playsinline class="w-full aspect-video object-cover cursor-pointer" onclick="galleryPlay('${id}')"></video>
+          <span class="absolute top-2 left-2 z-10 inline-flex items-center gap-1.5 text-[10px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm" style="background:rgba(253,224,180,0.55); color:#7d5b07">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.09 6.26L20.18 9.27l-5.09 3.9L16.18 20 12 16.77 7.82 20l1.09-6.83L3.82 9.27l6.09-1.01L12 2z"/></svg>
+            <span class="font-bold">ID-LoRA</span>
+          </span>
+          <div class="gallery-play-overlay" onclick="galleryPlay('${id}')">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <button class="mute-btn" onclick="toggleMute('${id}')">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+            </svg>
+          </button>
+          <button class="fullscreen-btn" onclick="goFullscreen('${id}')">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+            </svg>
+          </button>
+        </div>
+        <div class="p-4 space-y-2">
+          <div class="space-y-2" style="height:9rem; overflow:hidden">
+            <div class="flex items-start gap-2 flex-wrap">
+              <span class="pill pill-env shrink-0">Env Sounds</span>
+              <span class="text-xs text-gray-500">${p.envSounds}</span>
+            </div>
+            <div class="flex items-start gap-2 flex-wrap">
+              <span class="pill pill-speech shrink-0">Speech</span>
+              <span class="text-xs text-gray-500 italic">"${p.speech}"</span>
+            </div>
+          </div>
+          <div class="pt-2 border-t border-gray-100">
+            <p class="audio-ref-label mb-1">
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z"/></svg>
+              Input: Reference Audio
+            </p>
+            <div class="audio-ref">
+              <svg class="audio-ref-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+              </svg>
+              <audio src="${galleryRef(p.speaker)}" controls preload="metadata"></audio>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Render Comparisons ───────────────────────────────────────
+function renderComparisons() {
+  const container = document.getElementById('comparisons-container');
+  container.innerHTML = COMPARISON_PAIRS.map((p, i) => {
+    const prefix = `comp-${i}`;
+    const methods = [
+      { key: 'ours', label: 'ID-LoRA (Ours)', src: compOurs(p.speaker, p.pair), highlight: true },
+      { key: 'kling', label: 'Kling 2.6 Pro', src: compKling(p.speaker, p.pair), highlight: false },
+      { key: 'elevenlabs', label: 'ElevenLabs v3 + Wan2.2', src: compElevenlabs(p.speaker, p.pair), highlight: false },
+      { key: 'cosyvoice', label: 'CosyVoice 3 + Wan2.2', src: compCosyvoice(p.speaker, p.pair), highlight: false },
+      { key: 'voicecraft', label: 'VoiceCraft + Wan2.2', src: compVoicecraft(p.speaker, p.pair), highlight: false },
+    ];
+    const competitors = methods.filter(m => !m.highlight);
+    return `
+      <div class="av-card p-6">
+        <div class="flex flex-col items-center mb-4">
+          <div>
+            <p class="audio-ref-label mb-1 justify-center">
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z"/></svg>
+              Input: Reference Audio
+            </p>
+            <div class="audio-ref">
+              <svg class="audio-ref-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+              </svg>
+              <audio src="${compRef(p.speaker, p.pair)}" controls preload="metadata"></audio>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-col md:flex-row items-start gap-4 mb-4">
+          <div class="flex-1 min-w-0">
+            <div class="space-y-2 mb-3">
+              <div class="flex items-start gap-2 flex-wrap">
+                <span class="pill pill-speech shrink-0">Speech</span>
+                <span class="text-xs text-gray-500 italic">"${p.speech}"</span>
+              </div>
+              <div class="flex items-start gap-2 flex-wrap">
+                <span class="pill pill-env shrink-0">Env Sounds</span>
+                <span class="text-xs text-gray-500">${p.envSounds}</span>
+              </div>
+              <div class="flex items-start gap-2 flex-wrap">
+                <span class="pill pill-style shrink-0">Speaking Style</span>
+                <span class="text-xs text-gray-500">${p.speakingStyle}</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <div class="text-center">
+              <p class="text-[11px] text-gray-400 font-medium mb-1">Target (GT)</p>
+              <div class="video-wrap relative">
+                <video id="${prefix}-target" src="${compTarget(p.speaker, p.pair)}" poster="${posterOf(compTarget(p.speaker, p.pair))}" muted playsinline class="w-28 aspect-square object-cover rounded cursor-pointer" onclick="galleryPlay('${prefix}-target')"></video>
+                <div class="gallery-play-overlay" onclick="galleryPlay('${prefix}-target')" style="border-radius:0.5rem">
+                  <svg fill="currentColor" viewBox="0 0 24 24" style="width:28px;height:28px"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <button class="mute-btn" onclick="toggleMute('${prefix}-target')" style="width:24px;height:24px;bottom:4px;right:4px">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                  </svg>
+                </button>
+                <button class="fullscreen-btn" onclick="goFullscreen('${prefix}-target')" style="width:24px;height:24px;bottom:4px;left:4px">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Two-column: Ours (fixed) | Competitor (carousel) -->
+        <div class="flex flex-col md:flex-row items-center md:items-start gap-3 md:gap-4 md:justify-center">
+          <!-- Left: ID-LoRA (always visible) -->
+          <div class="ours-highlight rounded-xl overflow-hidden comp-col">
+            <div class="video-wrap relative">
+              <video id="${prefix}-ours" src="${compOurs(p.speaker, p.pair)}" poster="${posterOf(compOurs(p.speaker, p.pair))}" muted playsinline class="w-full aspect-square object-cover cursor-pointer" onclick="galleryPlay('${prefix}-ours')"></video>
+              <span class="absolute top-2 left-2 z-10 inline-flex items-center gap-1 bg-black/50 text-white text-[10px] font-medium px-2 py-0.5 rounded-full backdrop-blur-sm">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.09 6.26L20.18 9.27l-5.09 3.9L16.18 20 12 16.77 7.82 20l1.09-6.83L3.82 9.27l6.09-1.01L12 2z"/></svg>
+                Generated
+              </span>
+              <div class="gallery-play-overlay" onclick="galleryPlay('${prefix}-ours')">
+                <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+              <button class="mute-btn" onclick="toggleMute('${prefix}-ours')">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                </svg>
+              </button>
+              <button class="fullscreen-btn" onclick="goFullscreen('${prefix}-ours')">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+                </svg>
+              </button>
+            </div>
+            <p class="text-xs font-bold text-center py-2 text-gray-900" style="background:#FDE0B4">ID-LoRA (Ours)</p>
+          </div>
+          <!-- Desktop left arrow (hidden on mobile) -->
+          <button onclick="switchCompetitor(${i}, -1)" class="hidden md:flex shrink-0 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 items-center justify-center transition" style="margin-top:126px">
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <!-- Competitor carousel -->
+          <div class="relative comp-col comp-carousel-outer">
+            <div class="overflow-hidden rounded-xl" id="comp-carousel-${i}">
+              <div class="flex transition-transform duration-300 ease-in-out" id="comp-track-${i}">
+                ${competitors.map((c, ci) => {
+                  const vid = `${prefix}-${c.key}`;
+                  return `
+                  <div class="av-card overflow-hidden comp-slide" style="width:280px; flex-shrink:0; border-radius:0">
+                    <div class="video-wrap relative">
+                      <video id="${vid}" src="${c.src}" poster="${posterOf(c.src)}" muted playsinline class="w-full aspect-square object-cover cursor-pointer" onclick="galleryPlay('${vid}')"></video>
+                      <span class="absolute top-2 left-2 z-10 inline-flex items-center gap-1 bg-black/50 text-white text-[10px] font-medium px-2 py-0.5 rounded-full backdrop-blur-sm">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.09 6.26L20.18 9.27l-5.09 3.9L16.18 20 12 16.77 7.82 20l1.09-6.83L3.82 9.27l6.09-1.01L12 2z"/></svg>
+                        Generated
+                      </span>
+                      <div class="gallery-play-overlay" onclick="galleryPlay('${vid}')">
+                        <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      </div>
+                      <button class="mute-btn" onclick="toggleMute('${vid}')">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                        </svg>
+                      </button>
+                      <button class="fullscreen-btn" onclick="goFullscreen('${vid}')">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <p class="text-xs font-bold text-center py-2 text-gray-500">${c.label}</p>
+                  </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+            <p class="text-center text-[11px] text-gray-400 mt-1" id="comp-indicator-${i}">1 / ${competitors.length}</p>
+            <!-- Mobile arrows (overlaid on carousel) -->
+            <button onclick="switchCompetitor(${i}, -1)" class="md:hidden absolute left-1.5 z-20 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center" style="top:40%">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <button onclick="switchCompetitor(${i}, 1)" class="md:hidden absolute right-1.5 z-20 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center" style="top:40%">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+          <!-- Desktop right arrow (hidden on mobile) -->
+          <button onclick="switchCompetitor(${i}, 1)" class="hidden md:flex shrink-0 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 items-center justify-center transition" style="margin-top:126px">
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+        <details class="mt-4">
+          <summary class="text-xs font-medium text-gray-400 cursor-pointer hover:text-gray-600 transition select-none">Show full prompts</summary>
+          <div class="mt-3 space-y-3">
+            <div class="rounded-lg p-4" style="background:#FEF5E7; border:1px solid #FDE0B4">
+              <p class="text-xs font-semibold mb-2" style="color:#8B6914">ID-LoRA <span class="font-normal" style="color:#B8960E">— structured prompt (single unified model)</span></p>
+              <div class="text-xs text-gray-600 space-y-1.5 leading-relaxed">
+                <p><span class="font-semibold text-gray-700">[VISUAL]:</span> ${p.promptVisual}</p>
+                <p><span class="font-semibold text-gray-700">[SPEECH]:</span> ${p.speech}</p>
+                <p><span class="font-semibold text-gray-700">[SOUNDS]:</span> ${p.promptSounds}</p>
+              </div>
+            </div>
+            <div class="rounded-lg bg-gray-100 border border-gray-200 p-4">
+              <p class="text-xs font-semibold text-gray-700 mb-2">Kling 2.6 Pro <span class="font-normal text-gray-500">— structured prompt (single unified model)</span></p>
+              <div class="text-xs text-gray-600 space-y-1.5 leading-relaxed">
+                <p>${p.klingPrompt}</p>
+              </div>
+              <p class="text-[10px] text-gray-400 mt-2"><code class="bg-gray-200 px-1 rounded">&lt;&lt;&lt;voice_id&gt;&gt;&gt;</code> = cloned voice from the same reference audio clip</p>
+            </div>
+            <div class="rounded-lg bg-teal-50 border border-teal-200 p-4">
+              <p class="text-xs font-semibold text-teal-800 mb-2">ElevenLabs v3 + Wan2.2 <span class="font-normal text-teal-500">— cascaded: TTS → video</span></p>
+              <div class="text-xs text-gray-600 space-y-1.5 leading-relaxed">
+                <p><span class="font-semibold text-gray-700">Voice Clone:</span> Same reference audio clip</p>
+                <p><span class="font-semibold text-gray-700">Enhanced Text:</span> <code class="bg-teal-100 px-1 rounded text-teal-700">${p.elevenLabsText}</code></p>
+                <p><span class="font-semibold text-gray-700">Video Input:</span> First frame + generated audio → Wan2.2</p>
+              </div>
+            </div>
+            <div class="rounded-lg bg-gray-100 border border-gray-200 p-4">
+              <p class="text-xs font-semibold text-gray-700 mb-2">CosyVoice 3 + Wan2.2 / VoiceCraft + Wan2.2 <span class="font-normal text-gray-500">— cascaded: TTS → video</span></p>
+              <div class="text-xs text-gray-600 space-y-1.5 leading-relaxed">
+                <p><span class="font-semibold text-gray-700">Pipeline:</span> Voice cloning (CosyVoice 3.0 or VoiceCraft) → first frame + audio → Wan2.2</p>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Competitor Carousel ──────────────────────────────────────
+const compState = {}; // track current index per pair
+function switchCompetitor(pairIdx, direction) {
+  const carousel = document.getElementById(`comp-carousel-${pairIdx}`);
+  const track = document.getElementById(`comp-track-${pairIdx}`);
+  const indicator = document.getElementById(`comp-indicator-${pairIdx}`);
+  if (!track || !carousel) return;
+  const slideWidth = carousel.offsetWidth;
+  const totalSlides = track.children.length;
+  if (!compState[pairIdx]) compState[pairIdx] = 0;
+  compState[pairIdx] += direction;
+  // Wrap around
+  if (compState[pairIdx] < 0) compState[pairIdx] = totalSlides - 1;
+  if (compState[pairIdx] >= totalSlides) compState[pairIdx] = 0;
+  track.style.transform = `translateX(-${compState[pairIdx] * slideWidth}px)`;
+  if (indicator) indicator.textContent = `${compState[pairIdx] + 1} / ${totalSlides}`;
+}
+
+function initCarouselSizes() {
+  document.querySelectorAll('.comp-carousel-outer').forEach(outer => {
+    const carouselEl = outer.querySelector('[id^="comp-carousel-"]');
+    if (!carouselEl) return;
+    const w = carouselEl.offsetWidth;
+    const slides = outer.querySelectorAll('.comp-slide');
+    slides.forEach(s => { s.style.width = w + 'px'; });
+    const track = outer.querySelector('[id^="comp-track-"]');
+    if (track) track.style.width = (slides.length * w) + 'px';
+  });
+  // Re-apply current positions
+  Object.keys(compState).forEach(idx => {
+    const carousel = document.getElementById(`comp-carousel-${idx}`);
+    const track = document.getElementById(`comp-track-${idx}`);
+    if (carousel && track) {
+      track.style.transform = `translateX(-${compState[idx] * carousel.offsetWidth}px)`;
+    }
+  });
+}
+window.addEventListener('resize', initCarouselSizes);
+
+// ── Audio Controls ───────────────────────────────────────────
+function toggleMute(id) {
+  const v = document.getElementById(id);
+  if (!v) return;
+  v.muted = !v.muted;
+  updateMuteIcon(id, v.muted);
+}
+
+function togglePlay(id) {
+  const v = document.getElementById(id);
+  if (!v) return;
+  if (v.paused) { v.play(); } else { v.pause(); }
+  updatePlayIcon(id, v.paused);
+}
+
+function galleryPlay(id) {
+  const v = document.getElementById(id);
+  if (!v) return;
+  const overlay = v.parentElement.querySelector('.gallery-play-overlay');
+  if (v.paused) {
+    v.muted = false;
+    updateMuteIcon(id, false);
+    v.play();
+    if (overlay) overlay.classList.add('hidden');
+  } else {
+    v.pause();
+    if (overlay) overlay.classList.remove('hidden');
+  }
+}
+
+function goFullscreen(id) {
+  const v = document.getElementById(id);
+  if (!v) return;
+  if (v.requestFullscreen) v.requestFullscreen();
+  else if (v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+  else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+}
+
+function initGalleryEndHandlers() {
+  document.querySelectorAll('video').forEach(v => {
+    if (!v.parentElement.querySelector('.gallery-play-overlay')) return;
+    v.addEventListener('ended', () => {
+      const overlay = v.parentElement.querySelector('.gallery-play-overlay');
+      if (overlay) overlay.classList.remove('hidden');
+    });
+  });
+}
+
+function updatePlayIcon(id, isPaused) {
+  const v = document.getElementById(id);
+  if (!v) return;
+  const btn = v.parentElement.querySelector('.play-btn');
+  if (!btn) return;
+  btn.innerHTML = isPaused
+    ? '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>'
+    : '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>';
+}
+
+function updateMuteIcon(id, isMuted) {
+  const v = document.getElementById(id);
+  if (!v) return;
+  const btn = v.parentElement.querySelector('.mute-btn');
+  if (!btn) return;
+  btn.innerHTML = isMuted
+    ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>'
+    : '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>';
+}
+
+function muteAllVideos() {
+  document.querySelectorAll('video').forEach(v => {
+    v.muted = true;
+    if (v.id) updateMuteIcon(v.id, true);
+  });
+}
+
+function initHoverSound() {
+  // Mute buttons handle audio — no hover behavior needed
+  // (browsers block unmuted autoplay, causing videos to pause on hover)
+}
+
+function showSplit(split) {
+  document.querySelectorAll('.split-panel').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.split-tab').forEach(el => {
+    el.classList.remove('bg-brand-600', 'text-white');
+    el.classList.add('bg-gray-100', 'text-gray-600');
+  });
+  document.getElementById('split-' + split).classList.remove('hidden');
+  const tab = document.getElementById('tab-' + split);
+  tab.classList.remove('bg-gray-100', 'text-gray-600');
+  tab.classList.add('bg-brand-600', 'text-white');
+}
+
+function copyBibtex() {
+  const text = document.getElementById('bibtex-text').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+  });
+}
+
+// ── Initialize ───────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderGallery();
+  renderComparisons();
+  initCarouselSizes();
+  initGalleryEndHandlers();
+  requestAnimationFrame(() => initHoverSound());
+});
+</script>
+
 </body>
 </html>
